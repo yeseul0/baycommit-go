@@ -30,7 +30,7 @@ func GetStudiesByRepoUrl(repoUrl string) ([]types.Study, error) {
 	return studies, err
 }
 
-// 이메일 + 프록시 주소 -> 지갑주소 (한 유저가 지갑 다르게 여러 스터디에 참여할수도 있음)
+// 이메일 + 프록시 주소 -> 지갑주소 (왜냐면 한 유저가 지갑 다르게 여러 스터디에 참여할수도 있음)
 func GetWalletAddress(email, proxyAddress string) (string, error) { //하나만 찾는 함수임! 배열 아님
 	var userStudy types.UserStudy
 	err := DB.
