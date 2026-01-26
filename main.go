@@ -1,10 +1,11 @@
 package main
 
 import (
-	handler "baycommit-go/Handler"
+	handler "baycommit-go/handler"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"baycommit-go/service"
 
@@ -35,6 +36,11 @@ func main() {
 
 	//api url 등록
 	http.HandleFunc("/webhook", handler.WebhookHandler) // /webhook 으로 들어오는 모든 메소드 다 받음 ㅋ!
+
+	selfURL := os.Getenv("SELF_URL")
+	if selfURL != "" {
+		handler.StartSelfPing(selfURL)
+	}
 
 	//listning
 	fmt.Println("서버시작: http://localhost:8080:")
