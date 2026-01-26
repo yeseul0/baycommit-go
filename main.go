@@ -36,6 +36,7 @@ func main() {
 
 	//api url 등록
 	http.HandleFunc("/webhook", handler.WebhookHandler) // /webhook 으로 들어오는 모든 메소드 다 받음 ㅋ!
+	http.HandleFunc("/", handler.HealthHandler)
 
 	selfURL := os.Getenv("SELF_URL")
 	if selfURL != "" {
@@ -43,6 +44,6 @@ func main() {
 	}
 
 	//listning
-	fmt.Println("서버시작: http://localhost:8080:")
+	fmt.Println("서버시작 :8080 listening")
 	http.ListenAndServe(":8080", nil)
 }

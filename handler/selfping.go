@@ -20,3 +20,9 @@ func StartSelfPing(url string) {
 		}
 	}()
 }
+
+// health check
+func HealthHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
