@@ -2,7 +2,10 @@ package service
 
 import (
 	"baycommit-go/types"
+	"fmt"
 	"os"
+
+	"time"
 
 	"gorm.io/driver/postgres" //PostgreSQL 드라이버
 	"gorm.io/gorm"
@@ -43,4 +46,48 @@ func GetWalletAddress(email, proxyAddress string) (string, error) { //하나만 
 		return "", err
 	}
 	return userStudy.WalletAddress, nil
+}
+
+// 새로운 세션 PENDING 상태로 미리 생성
+func CreatePendingSession(proxyAddr string, studyDateUnix uint64, txHash string) error {
+	// 1. ProxyAddress로 Study ID 찾기
+	var study types.Study
+	err := DB.Where("proxy_address = ?", proxyAddr).First(&study).Error
+	if err != nil {
+		return fmt.Errorf("스터디 찾기 실패: %v", err)
+	}
+
+	t := time.Unix(int64(studyDateUnix), 0).UTC()
+	dateString := t.Format("2006-01-02")
+
+	// 2. SELECT 먼저!! 검색 조건 (중복 방지)
+	where := types.StudySession{
+		StudyID:          study.ID,
+		StudyMidnightUtc: int64(studyDateUnix),
+	}
+
+	// 3. 생성 데이터 (PENDING 상태)
+	attrs := types.StudySession{
+		StudyDate:        dateString,
+		Status:           types.StatusPending,
+		StartedAt:        time.Now().Unix(),
+		BlockchainTxHash: txHash,
+	}
+
+	// 4. 저장 (FirstOrCreate)
+	return DB.Where(where).Attrs(attrs).FirstOrCreate(&types.StudySession{}).Error
+}
+
+// 세션 status 업데이트
+func UpdateStudySessionStatus(proxyAddr string, studyDateUnix uint64, status types.SessionStatus) error {
+	// 1. ProxyAddress로 Study ID 찾기
+	var study types.Study
+	if err := DB.Where("proxy_address = ?", proxyAddr).First(&study).Error; err != nil {
+		return err
+	}
+
+	// 2. 해당 스터디 + 날짜의 세션을 찾아서 상태 업데이트
+	return DB.Model(&types.StudySession{}).
+		Where("study_id = ? AND study_midnight_utc = ?", study.ID, int64(studyDateUnix)).
+		Update("status", status).Error
 }

@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"baycommit-go/contract"
+	"baycommit-go/types"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -114,10 +115,31 @@ func StartTodayStudy(proxyAddr string, timestamp uint64) error {
 
 	fmt.Printf("StartTodayStudy tx 전송됨: %s\n", tx.Hash().Hex())
 
-	// 트랜잭션 확인 대기
-	_, err = bind.WaitMined(context.Background(), client, tx)
+	//미리 DB에 PENDING 저장
+	err = CreatePendingSession(proxyAddr, timestamp, tx.Hash().Hex())
 	if err != nil {
+		return fmt.Errorf("DB에 PENDING 세션 생성 실패: %v", err)
+	}
+
+	// 트랜잭션 확인 대기
+	receipt, err := bind.WaitMined(context.Background(), client, tx)
+	if err != nil {
+		//status PENDING -> FAILED 로 업데이트
+		UpdateStudySessionStatus(proxyAddr, timestamp, types.StatusFailed)
 		return fmt.Errorf("트랜잭션 마이닝 대기 실패: %v", err)
+	}
+
+	//채굴은 됐는데 실행 실패(Revert)한 경우 (Status가 0이면 실패)
+	if receipt.Status == 0 {
+		UpdateStudySessionStatus(proxyAddr, timestamp, types.StatusFailed)
+		return fmt.Errorf("트랜잭션이 블록체인에서 실패(Revert)했습니다")
+	}
+	//DB에 스터디 세션 상태 업데이트 (PENDING->ACTIVE)
+	err = UpdateStudySessionStatus(proxyAddr, timestamp, types.StatusActive)
+	if err != nil {
+		return fmt.Errorf("DB에 세션 상태 업데이트 실패: %v", err)
+
+		//이거 어쩔건지 고민좀?!!
 	}
 
 	return nil

@@ -65,7 +65,8 @@ func ProcessCommit(commit types.Commit) error {
 		}
 		if participantCount == 0 { //스터디 시작 안됐으면 시작 (blockchain.StartTodayStudy() 호출)
 			fmt.Println("오늘 스터디 시작 중...")
-			err = StartTodayStudy(study.ProxyAddress, studyDate)
+
+			err := StartTodayStudy(study.ProxyAddress, studyDate)
 			if err != nil {
 				fmt.Printf("스터디 시작 실패: %v\n", err)
 				continue
