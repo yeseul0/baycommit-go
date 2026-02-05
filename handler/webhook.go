@@ -4,6 +4,7 @@ package handler
 import (
 	"baycommit-go/service"
 	"baycommit-go/types"
+	"baycommit-go/worker"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -47,16 +48,23 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	//push 이벤트 + 커밋 있을 때만 처리
 	if githubEvent == "push" && len(payload.Commits) > 0 {
 		sendResponse(w, true, "Webhook received, processing commits...")
-		go func() {
-			for _, commit := range payload.Commits {
-				commit.RepositoryUrl = payload.Repository.HtmlUrl
-				err := service.ProcessCommit(commit)
-				if err != nil {
-					fmt.Printf("Commit processing failed: %v\n", err)
+
+		/*
+			go func() { // webhook 마다 고루틴 (worker pool로 처리량 제어)
+				for _, commit := range payload.Commits {
+					commit.RepositoryUrl = payload.Repository.HtmlUrl
+					err := service.ProcessCommit(commit)
+					if err != nil {
+						fmt.Printf("Commit processing failed: %v\n", err)
+					}
 				}
-			}
-			fmt.Printf("Successfully processed %d commits in background\n", len(payload.Commits))
-		}()
+				fmt.Printf("Successfully processed %d commits in background\n", len(payload.Commits))
+			}()
+		*/
+		for _, commit := range payload.Commits {
+			commit.RepositoryUrl = payload.Repository.HtmlUrl
+			worker.JobQueue <- worker.CommitJob{Commit: commit} // 작업 구조체로 바꿔서 채널에 넣기만!
+		}
 		return
 	}
 	sendResponse(w, true, githubEvent+" event ignored")

@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"baycommit-go/service"
+	"baycommit-go/worker"
 
 	"github.com/joho/godotenv"
 )
@@ -33,6 +34,9 @@ func main() {
 		log.Fatal("블록체인 연결 실패:", err)
 	}
 	fmt.Println("블록체인 연결됨")
+
+	//Worker Pool 시작 (워커 10개, 큐 사이즈 100)
+	worker.StartWorkerPool(10, 100)
 
 	//api url 등록
 	http.HandleFunc("/webhook", handler.WebhookHandler) // /webhook 으로 들어오는 모든 메소드 다 받음 ㅋ!
