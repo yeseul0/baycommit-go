@@ -90,4 +90,4 @@ func UpdateStudySessionStatus(proxyAddr string, studyDateUnix uint64, status typ
 	return DB.Model(&types.StudySession{}).
 		Where("study_id = ? AND study_midnight_utc = ?", study.ID, int64(studyDateUnix)).
 		Update("status", status).Error
-}
+} // 세션의 status 업데이트 (성공, 실패)
