@@ -15,8 +15,9 @@ func (Study) TableName() string { //Study 구조체는 studies 테이블임
 
 // users 테이블
 type User struct {
-	ID          uint   `gorm:"primaryKey"`
-	GithubEmail string `gorm:"column:github_email"`
+	ID            uint   `gorm:"primaryKey"`
+	GithubEmail   string `gorm:"column:github_email"`
+	WalletAddress string `gorm:"column:wallet_address"`
 }
 
 func (User) TableName() string {
@@ -25,26 +26,14 @@ func (User) TableName() string {
 
 // user_studies 테이블
 type UserStudy struct {
-	ID            uint   `gorm:"primaryKey"`
-	UserID        uint   `gorm:"column:user_id"`
-	StudyID       uint   `gorm:"column:study_id"`
-	WalletAddress string `gorm:"columnc:wallet_address"`
+	ID      uint   `gorm:"primaryKey"`
+	UserID  uint   `gorm:"column:user_id"`
+	StudyID uint   `gorm:"column:study_id"`
+	RepoUrl string `gorm:"column:repo_url"`
 }
 
 func (UserStudy) TableName() string {
 	return "user_studies"
-}
-
-// repositories 테이블
-type Repository struct {
-	ID       uint `gorm:"primaryKey"`
-	StudyID  uint `gorm:"column:study_id"`
-	RepoUrl  uint `gorm:"column:repo_url"`
-	IsActive bool `gorm:"column:is_active"`
-}
-
-func (Repository) TableName() string {
-	return "repositories"
 }
 
 // study_sessions 테이블
@@ -71,7 +60,6 @@ type CommitRecord struct {
 	CommitTimestamp int64  `gorm:"column:commit_timestamp"`
 	CommitID        string `gorm:"column:commit_id"`
 	CommitMessage   string `gorm:"column:commit_message"`
-	WalletAddress   string `gorm:"column:wallet_address"`
 }
 
 func (CommitRecord) TableName() string {
