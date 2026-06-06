@@ -30,6 +30,8 @@ func StartWorkerPool(numWorkers int, queueSize int) {
 // Worker 함수 (채널에서 작업 꺼내서 처리)
 func worker(id int) {
 	for job := range JobQueue {
+		// [메트릭] Worker Pool 큐 사이즈 감소
+		service.WorkerQueueSize.Dec()
 		log.Printf("Worker %d processing commit: %s\n", id, job.Commit.Id[:8])
 
 		err := service.ProcessCommit(job.Commit)

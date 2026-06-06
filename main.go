@@ -11,6 +11,7 @@ import (
 	"baycommit-go/worker"
 
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -38,9 +39,13 @@ func main() {
 	//Worker Pool 시작 (워커 10개, 큐 사이즈 100)
 	worker.StartWorkerPool(10, 100)
 
+	// 메트릭 초기화
+	service.InitMetrics()
+
 	//api url 등록
-	http.HandleFunc("/webhook", handler.WebhookHandler) // /webhook 으로 들어오는 모든 메소드 다 받음 ㅋ!
+	http.HandleFunc("/webhook", handler.WebhookHandler)
 	http.HandleFunc("/", handler.HealthHandler)
+	http.Handle("/metrics", promhttp.Handler()) // Prometheus 메트릭 엔드포인트
 
 	selfURL := os.Getenv("SELF_URL")
 	if selfURL != "" {

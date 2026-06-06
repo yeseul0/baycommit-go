@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"baycommit-go/contract"
+	"github.com/prometheus/client_golang/prometheus"
 	"baycommit-go/types"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -66,6 +67,10 @@ func getTxOpts() (*bind.TransactOpts, error) {
 
 // 컨트랙트 조회: 오늘 스터디 정보
 func GetStudyDayInfo(proxyAddr string, timestamp uint64) (participantCount uint64, isClosed bool, err error) {
+	// [메트릭] 블록체인 RPC 소요시간 측정 - get_study_day_info
+	timer := prometheus.NewTimer(BlockchainRPCDuration.WithLabelValues("get_study_day_info"))
+	defer timer.ObserveDuration()
+
 	instance, err := getContractInstance(proxyAddr)
 	if err != nil {
 		return 0, false, err
@@ -81,6 +86,10 @@ func GetStudyDayInfo(proxyAddr string, timestamp uint64) (participantCount uint6
 
 // 컨트랙트 조회: 유저 커밋 시간
 func GetCommitTime(proxyAddr string, timestamp uint64, userAddr string) (uint64, error) {
+	// [메트릭] 블록체인 RPC 소요시간 측정 - get_commit_time
+	timer := prometheus.NewTimer(BlockchainRPCDuration.WithLabelValues("get_commit_time"))
+	defer timer.ObserveDuration()
+
 	instance, err := getContractInstance(proxyAddr)
 	if err != nil {
 		return 0, err
@@ -98,6 +107,10 @@ func GetCommitTime(proxyAddr string, timestamp uint64, userAddr string) (uint64,
 
 // 컨트랙트 호출: 오늘 스터디 시작
 func StartTodayStudy(proxyAddr string, timestamp uint64) error {
+	// [메트릭] 블록체인 RPC 소요시간 측정 - start_today_study
+	timer := prometheus.NewTimer(BlockchainRPCDuration.WithLabelValues("start_today_study"))
+	defer timer.ObserveDuration()
+
 	instance, err := getContractInstance(proxyAddr)
 	if err != nil {
 		return err
@@ -147,6 +160,10 @@ func StartTodayStudy(proxyAddr string, timestamp uint64) error {
 
 // 컨트랙트 호출: 커밋 기록
 func TrackCommit(proxyAddr string, timestamp uint64, userAddr string, commitTime uint64) error {
+	// [메트릭] 블록체인 RPC 소요시간 측정 - track_commit
+	timer := prometheus.NewTimer(BlockchainRPCDuration.WithLabelValues("track_commit"))
+	defer timer.ObserveDuration()
+
 	instance, err := getContractInstance(proxyAddr)
 	if err != nil {
 		return err

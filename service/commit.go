@@ -81,15 +81,21 @@ func ProcessCommit(commit types.Commit) error {
 		}
 		if existingCommit != 0 {
 			fmt.Printf("이미 커밋 기록됨, skip\n")
+			// [메트릭] 커밋 처리 횟수 - skip
+			CommitProcessTotal.WithLabelValues("skip").Inc()
 			continue
 		}
 		fmt.Println("커밋 기록 중...")
 		err = TrackCommit(study.ProxyAddress, studyDate, walletAddr, commitTime)
 		if err != nil {
 			fmt.Printf("커밋 기록 실패: %v\n", err)
+			// [메트릭] 커밋 처리 횟수 - error
+			CommitProcessTotal.WithLabelValues("error").Inc()
 			continue
 		}
 
+		// [메트릭] 커밋 처리 횟수 - success
+		CommitProcessTotal.WithLabelValues("success").Inc()
 		fmt.Printf("커밋 기록 완료! 스터디 : %s\n", study.ProxyAddress)
 		fmt.Printf("studyDate : %d\nwalletAddress : %s\n", studyDate, walletAddr)
 	}

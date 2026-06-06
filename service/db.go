@@ -4,9 +4,9 @@ import (
 	"baycommit-go/types"
 	"fmt"
 	"os"
-
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"gorm.io/driver/postgres" //PostgreSQL 드라이버
 	"gorm.io/gorm"
 )
@@ -23,6 +23,10 @@ func ConnectDB() error {
 
 // repourl -> study 컨트랙트s (이 레포가 등록된 스터디들)
 func GetStudiesByRepoUrl(repoUrl string) ([]types.Study, error) {
+	// [메트릭] DB 쿼리 소요시간 측정 - get_studies_by_repo
+	timer := prometheus.NewTimer(DBQueryDuration.WithLabelValues("get_studies_by_repo"))
+	defer timer.ObserveDuration()
+
 	var studies []types.Study
 
 	err := DB.
@@ -35,6 +39,10 @@ func GetStudiesByRepoUrl(repoUrl string) ([]types.Study, error) {
 
 // 이메일 + 프록시 주소 -> 지갑주소 (왜냐면 한 유저가 지갑 다르게 여러 스터디에 참여할수도 있음)
 func GetWalletAddress(email, proxyAddress string) (string, error) { //하나만 찾는 함수임! 배열 아님
+	// [메트릭] DB 쿼리 소요시간 측정 - get_wallet_address
+	timer := prometheus.NewTimer(DBQueryDuration.WithLabelValues("get_wallet_address"))
+	defer timer.ObserveDuration()
+
 	var userStudy types.UserStudy
 	err := DB.
 		Joins("JOIN users ON users.id = user_studies.user_id").

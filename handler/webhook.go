@@ -30,6 +30,8 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	//sig 검증
 	if !service.VerifySignature(body, signature) {
 		fmt.Println("Invalid webhook signature")
+		// [메트릭] 웹훅 수신 횟수 - error (서명 검증 실패)
+		service.WebhookTotal.WithLabelValues("error").Inc()
 		sendResponse(w, false, "Invalid signature")
 		return
 	}
@@ -47,6 +49,8 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 
 	//push 이벤트 + 커밋 있을 때만 처리
 	if githubEvent == "push" && len(payload.Commits) > 0 {
+		// [메트릭] 웹훅 수신 횟수 - success
+		service.WebhookTotal.WithLabelValues("success").Inc()
 		sendResponse(w, true, "Webhook received, processing commits...")
 
 		/*
@@ -63,7 +67,9 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 		*/
 		for _, commit := range payload.Commits {
 			commit.RepositoryUrl = payload.Repository.HtmlUrl
-			worker.JobQueue <- worker.CommitJob{Commit: commit} // 작업 구조체로 바꿔서 채널에 넣기만!
+			// [메트릭] Worker Pool 큐 사이즈 증가
+			service.WorkerQueueSize.Inc()
+			worker.JobQueue <- worker.CommitJob{Commit: commit}
 		}
 		return
 	}
