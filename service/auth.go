@@ -44,6 +44,7 @@ func ExchangeCodeForToken(code string) (string, error) {
 
 /*
 ② access token → GitHub 유저 정보 조회
+이메일이 비공개인 경우 /user/emails 로 fallback
 */
 func GetGitHubUser(accessToken string) (types.GitHubUser, error) {
 	req, _ := http.NewRequest("GET", "https://api.github.com/user", nil)
@@ -57,14 +58,41 @@ func GetGitHubUser(accessToken string) (types.GitHubUser, error) {
 	defer resp.Body.Close()
 
 	body, _ := io.ReadAll(resp.Body)
-
 	var user types.GitHubUser
 	json.Unmarshal(body, &user)
 
+	// 이메일 비공개인 경우 /user/emails에서 primary 이메일 조회
 	if user.Email == "" {
-		return user, fmt.Errorf("GitHub 이메일이 비어있음 (이메일 공개 설정 필요)")
+		email, err := getPrimaryEmail(accessToken)
+		if err != nil {
+			return user, fmt.Errorf("GitHub 이메일 조회 실패: %v", err)
+		}
+		user.Email = email
 	}
+
 	return user, nil
+}
+
+func getPrimaryEmail(accessToken string) (string, error) {
+	req, _ := http.NewRequest("GET", "https://api.github.com/user/emails", nil)
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var emails []types.GitHubEmail
+	json.NewDecoder(resp.Body).Decode(&emails)
+
+	for _, e := range emails {
+		if e.Primary && e.Verified {
+			return e.Email, nil
+		}
+	}
+	return "", fmt.Errorf("primary 이메일 없음")
 }
 
 /*
