@@ -24,3 +24,17 @@ type WebhookResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 }
+
+// GitHub API /user 응답
+type GitHubUser struct {
+	ID    int    `json:"id"`
+	Login string `json:"login"`
+	Email string `json:"email"`
+}
+
+// GitHub OAuth access token 응답
+type GitHubTokenResponse struct {
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	Scope       string `json:"scope"`
+}
