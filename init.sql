@@ -15,14 +15,7 @@ CREATE TABLE user_studies (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES users(id),
     study_id INT NOT NULL REFERENCES studies(id),
-    wallet_address VARCHAR NOT NULL
-);
-
-CREATE TABLE repositories (
-    id SERIAL PRIMARY KEY,
-    study_id INT NOT NULL REFERENCES studies(id),
-    repo_url VARCHAR NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT true
+    repo_url VARCHAR NOT NULL
 );
 
 CREATE TABLE study_sessions (
@@ -52,8 +45,5 @@ INSERT INTO users (github_email, wallet_address) VALUES
 INSERT INTO studies (proxy_address, study_start_time, study_end_time) VALUES
     ('0xabcdef1234567890abcdef1234567890abcdef12', 0, 86400);
 
-INSERT INTO user_studies (user_id, study_id, wallet_address) VALUES
-    (1, 1, '0x1234567890abcdef1234567890abcdef12345678');
-
-INSERT INTO repositories (study_id, repo_url, is_active) VALUES
-    (1, 'https://github.com/yeseul0/rust-study', true);
+INSERT INTO user_studies (user_id, study_id, repo_url) VALUES
+    (1, 1, 'https://github.com/yeseul0/rust-study');

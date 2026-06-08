@@ -28,7 +28,7 @@ var (
 			Help:    "DB 쿼리 소요시간",
 			Buckets: []float64{0.001, 0.005, 0.01, 0.05, 0.1, 0.5},
 		},
-		[]string{"query"}, // query: get_studies_by_repo | get_wallet_address | create_session | update_session
+		[]string{"query"}, // query: get_user_study | get_wallet | create_session | update_session
 	)
 
 	// 블록체인 RPC 소요시간

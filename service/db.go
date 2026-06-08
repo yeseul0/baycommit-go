@@ -21,39 +21,38 @@ func ConnectDB() error {
 	return err
 }
 
-// repourl -> study 컨트랙트s (이 레포가 등록된 스터디들)
-func GetStudiesByRepoUrl(repoUrl string) ([]types.Study, error) {
-	// [메트릭] DB 쿼리 소요시간 측정 - get_studies_by_repo
-	timer := prometheus.NewTimer(DBQueryDuration.WithLabelValues("get_studies_by_repo"))
-	defer timer.ObserveDuration()
-
-	var studies []types.Study
-
-	err := DB.
-		Joins("JOIN repositories ON repositories.study_id = studies.id").
-		Where("repositories.repo_url = ? AND repositories.is_active = true", repoUrl). //SQL injection 방지
-		Find(&studies).Error
-
-	return studies, err
-}
-
-// 이메일 + 프록시 주소 -> 지갑주소 (왜냐면 한 유저가 지갑 다르게 여러 스터디에 참여할수도 있음)
-func GetWalletAddress(email, proxyAddress string) (string, error) { //하나만 찾는 함수임! 배열 아님
-	// [메트릭] DB 쿼리 소요시간 측정 - get_wallet_address
-	timer := prometheus.NewTimer(DBQueryDuration.WithLabelValues("get_wallet_address"))
+// repo_url -> (study, user) 동시 특정
+func GetUserStudyByRepoUrl(repoUrl string) (types.UserStudy, types.Study, error) {
+	// [메트릭] DB 쿼리 소요시간 측정 - get_user_study
+	timer := prometheus.NewTimer(DBQueryDuration.WithLabelValues("get_user_study"))
 	defer timer.ObserveDuration()
 
 	var userStudy types.UserStudy
-	err := DB.
-		Joins("JOIN users ON users.id = user_studies.user_id").
-		Joins("JOIN studies ON studies.id = user_studies.study_id").
-		Where("users.github_email = ? AND studies.proxy_address = ?", email, proxyAddress).
-		First(&userStudy).Error
+	var study types.Study
 
+	err := DB.
+		Where("repo_url = ?", repoUrl).
+		First(&userStudy).Error
+	if err != nil {
+		return userStudy, study, err
+	}
+
+	err = DB.First(&study, userStudy.StudyID).Error
+	return userStudy, study, err
+}
+
+// user_id -> 지갑주소
+func GetWalletAddressByUserID(userID uint) (string, error) {
+	// [메트릭] DB 쿼리 소요시간 측정 - get_wallet
+	timer := prometheus.NewTimer(DBQueryDuration.WithLabelValues("get_wallet"))
+	defer timer.ObserveDuration()
+
+	var user types.User
+	err := DB.First(&user, userID).Error
 	if err != nil {
 		return "", err
 	}
-	return userStudy.WalletAddress, nil
+	return user.WalletAddress, nil
 }
 
 // 새로운 세션 PENDING 상태로 미리 생성

@@ -7,6 +7,8 @@ import (
 	"math/big"
 	"os"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"baycommit-go/contract"
 	"github.com/prometheus/client_golang/prometheus"
 	"baycommit-go/types"
