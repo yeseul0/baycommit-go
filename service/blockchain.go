@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"baycommit-go/contract"
+	"github.com/prometheus/client_golang/prometheus"
 	"baycommit-go/types"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
