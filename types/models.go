@@ -4,9 +4,12 @@ package types
 // studies 테이블
 type Study struct {
 	ID             uint   `gorm:"primaryKey"`
+	Name           string `gorm:"column:name"`
+	OwnerID        uint   `gorm:"column:owner_id"`
 	ProxyAddress   string `gorm:"column:proxy_address"`
 	StudyStartTime int64  `gorm:"column:study_start_time"`
-	StudyEndTime   int64  `gorm:"column:study_end_time`
+	StudyEndTime   int64  `gorm:"column:study_end_time"`
+	CreatedAt      int64  `gorm:"column:created_at;autoCreateTime"`
 }
 
 func (Study) TableName() string { //Study 구조체는 studies 테이블임

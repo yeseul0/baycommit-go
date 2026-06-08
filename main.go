@@ -45,6 +45,7 @@ func main() {
 	//api url 등록
 	http.HandleFunc("/webhook", handler.WebhookHandler)
 	http.HandleFunc("/auth/github/callback", handler.GithubCallbackHandler)
+	http.HandleFunc("/study/list", handler.StudyListHandler)
 	http.HandleFunc("/", handler.HealthHandler)
 	http.Handle("/metrics", promhttp.Handler()) // Prometheus 메트릭 엔드포인트
 

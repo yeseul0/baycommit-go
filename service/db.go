@@ -24,6 +24,13 @@ func ConnectDB() error {
 	return err
 }
 
+// email -> 유저 조회
+func GetUserByEmail(email string) (types.User, error) {
+	var user types.User
+	err := DB.Where("github_email = ?", email).First(&user).Error
+	return user, err
+}
+
 // repo_url -> (study, user) 동시 특정
 func GetUserStudyByRepoUrl(repoUrl string) (types.UserStudy, types.Study, error) {
 	// [메트릭] DB 쿼리 소요시간 측정 - get_user_study

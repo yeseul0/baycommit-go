@@ -45,3 +45,46 @@ type GitHubEmail struct {
 	Primary  bool   `json:"primary"`
 	Verified bool   `json:"verified"`
 }
+
+// ===== /study/list 응답 타입 =====
+
+type CommitInfo struct {
+	CommitId      string `json:"commitId"`
+	CommitMessage string `json:"commitMessage"`
+	CommitTime    int64  `json:"commitTime"`
+}
+
+type ParticipantInfo struct {
+	GithubEmail   string      `json:"githubEmail"`
+	GithubHandle  string      `json:"githubHandle"`
+	WalletAddress string      `json:"walletAddress"`
+	Commit        *CommitInfo `json:"commit"` // null이면 커밋 안 함
+}
+
+type TodaySession struct {
+	SessionId    uint              `json:"sessionId"`
+	Status       string            `json:"status"`
+	StudyDate    string            `json:"studyDate"`
+	StartedAt    int64             `json:"startedAt"`
+	Participants []ParticipantInfo `json:"participants"`
+}
+
+type StudyListItem struct {
+	ID                      uint          `json:"id"`
+	StudyName               string        `json:"studyName"`
+	CreatedAt               string        `json:"createdAt"`
+	ProxyAddress            string        `json:"proxyAddress"`
+	StudyStartTime          int64         `json:"studyStartTime"`
+	StudyEndTime            int64         `json:"studyEndTime"`
+	IsOwner                 bool          `json:"isOwner"`
+	IsParticipating         bool          `json:"isParticipating"`
+	HasRegisteredRepository bool          `json:"hasRegisteredRepository"`
+	MyRepoUrl               string        `json:"myRepoUrl"`
+	ParticipantCount        int           `json:"participantCount"`
+	TodaySession            *TodaySession `json:"todaySession"` // null이면 오늘 세션 없음
+}
+
+type StudyListResponse struct {
+	Success bool            `json:"success"`
+	Studies []StudyListItem `json:"studies"`
+}
