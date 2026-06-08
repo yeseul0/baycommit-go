@@ -36,7 +36,7 @@ func GithubCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ③ DB upsert
-	err = service.UpsertUser(githubUser.Email)
+	err = service.UpsertUser(githubUser.Email, githubUser.Login)
 	if err != nil {
 		fmt.Printf("DB 저장 실패: %v\n", err)
 		http.Error(w, "유저 저장 실패", http.StatusInternalServerError)

@@ -98,9 +98,10 @@ func getPrimaryEmail(accessToken string) (string, error) {
 /*
 ③ DB에 유저 저장 (없으면 create, 있으면 그대로)
 */
-func UpsertUser(githubEmail string) error {
+func UpsertUser(githubEmail string, githubLogin string) error {
+	user := types.User{GithubEmail: githubEmail, GithubLogin: githubLogin}
 	return DB.Where(map[string]interface{}{"github_email": githubEmail}).
-		FirstOrCreate(&types.User{GithubEmail: githubEmail}).Error
+		FirstOrCreate(&user).Error
 }
 
 /*
