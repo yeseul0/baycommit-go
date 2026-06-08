@@ -17,7 +17,10 @@ var DB *gorm.DB
 func ConnectDB() error {
 	dsn := os.Getenv("DATABASE_URL") //Data Src Name
 	var err error
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	DB, err = gorm.Open(postgres.New(postgres.Config{
+		DSN:                  dsn,
+		PreferSimpleProtocol: true, // PgBouncer(Supabase) 호환
+	}), &gorm.Config{})
 	return err
 }
 
