@@ -129,6 +129,20 @@ type TodayCommitsResponse struct {
 	Studies []TodayCommitStudy `json:"studies"`
 }
 
+// ===== /study/:proxyAddress/repositories 응답 타입 =====
+
+type StudyParticipantRepo struct {
+	ParticipantEmail  string `json:"participantEmail"`
+	ParticipantHandle string `json:"participantHandle"`
+	ParticipantWallet string `json:"participantWallet"`
+	RepoUrl           string `json:"repoUrl"` // 미등록이면 ""
+}
+
+type StudyRepositoriesResponse struct {
+	Success      bool                   `json:"success"`
+	Participants []StudyParticipantRepo `json:"participants"`
+}
+
 // ===== /study/repository/register 요청/응답 타입 =====
 
 type RepositoryRegisterRequest struct {

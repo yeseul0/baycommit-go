@@ -50,6 +50,7 @@ func main() {
 	http.HandleFunc("/study/create", handler.StudyCreateHandler)
 	http.HandleFunc("/study/all/commits/today", handler.TodayCommitsHandler)
 	http.HandleFunc("/study/repository/register", handler.StudyRepositoryRegisterHandler)
+	http.HandleFunc("/study/", handler.StudyRepositoriesHandler)
 	http.HandleFunc("/", handler.HealthHandler)
 	http.Handle("/metrics", promhttp.Handler()) // Prometheus 메트릭 엔드포인트
 

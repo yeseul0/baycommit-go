@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -63,6 +64,34 @@ func StudyListHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(types.StudyListResponse{
 		Success: true,
 		Studies: studies,
+	})
+}
+
+/*
+GET /study/:proxyAddress/repositories
+스터디 참여자 전체 + 각자 등록된 repoUrl 반환
+*/
+func StudyRepositoriesHandler(w http.ResponseWriter, r *http.Request) {
+	// URL: /study/0xABC.../repositories → proxyAddress 추출
+	// path = ["", "study", "0xABC...", "repositories"]
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) != 4 || parts[3] != "repositories" {
+		http.Error(w, "잘못된 경로", http.StatusBadRequest)
+		return
+	}
+	proxyAddress := parts[2]
+
+	participants, err := service.GetStudyParticipantRepos(proxyAddress)
+	if err != nil {
+		fmt.Printf("참여자 레포 조회 실패: %v\n", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(types.StudyRepositoriesResponse{
+		Success:      true,
+		Participants: participants,
 	})
 }
 
