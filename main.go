@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"baycommit-go/service"
 	"baycommit-go/worker"
@@ -13,6 +14,33 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+func corsMiddleware(next http.Handler) http.Handler {
+	// ALLOWED_ORIGINS=http://localhost:3000,https://baycommit.com
+	allowedOrigins := strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",")
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestOrigin := r.Header.Get("Origin")
+
+		for _, allowed := range allowedOrigins {
+			if strings.TrimSpace(allowed) == requestOrigin {
+				w.Header().Set("Access-Control-Allow-Origin", requestOrigin)
+				break
+			}
+		}
+
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
 
 func main() {
 
@@ -49,6 +77,7 @@ func main() {
 	http.HandleFunc("/study/list", handler.StudyListHandler)
 	http.HandleFunc("/study/create", handler.StudyCreateHandler)
 	http.HandleFunc("/study/all/commits/today", handler.TodayCommitsHandler)
+	http.HandleFunc("/study/join", handler.StudyJoinHandler)
 	http.HandleFunc("/study/repository/register", handler.StudyRepositoryRegisterHandler)
 	http.HandleFunc("/study/", handler.StudyRepositoriesHandler)
 	http.HandleFunc("/", handler.HealthHandler)
@@ -61,5 +90,5 @@ func main() {
 
 	//listning
 	fmt.Println("서버시작 :8080 listening")
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8080", corsMiddleware(http.DefaultServeMux))
 }

@@ -143,6 +143,18 @@ type StudyRepositoriesResponse struct {
 	Participants []StudyParticipantRepo `json:"participants"`
 }
 
+// ===== /study/join 요청/응답 타입 =====
+
+type StudyJoinRequest struct {
+	ProxyAddress  string `json:"proxyAddress"`
+	WalletAddress string `json:"walletAddress"`
+}
+
+type StudyJoinResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
+
 // ===== /study/repository/register 요청/응답 타입 =====
 
 type RepositoryRegisterRequest struct {

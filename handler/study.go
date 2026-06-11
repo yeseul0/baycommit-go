@@ -96,6 +96,51 @@ func StudyRepositoriesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
+POST /study/join
+스터디 참여 + 지갑 주소 등록 (생성자도 이걸 타야 함)
+*/
+func StudyJoinHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	email, err := extractEmailFromCookie(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	currentUser, err := service.GetUserByEmail(email)
+	if err != nil {
+		http.Error(w, "유저를 찾을 수 없습니다", http.StatusUnauthorized)
+		return
+	}
+
+	var req types.StudyJoinRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "요청 파싱 실패", http.StatusBadRequest)
+		return
+	}
+	if req.ProxyAddress == "" || req.WalletAddress == "" {
+		http.Error(w, "proxyAddress, walletAddress 필수", http.StatusBadRequest)
+		return
+	}
+
+	if err := service.JoinStudy(currentUser.ID, req.ProxyAddress, req.WalletAddress); err != nil {
+		fmt.Printf("스터디 참여 실패: %v\n", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(types.StudyJoinResponse{
+		Success: true,
+		Message: "스터디에 참여했습니다.",
+	})
+}
+
+/*
 POST /study/repository/register
 스터디 참여자가 본인 레포 등록
 */

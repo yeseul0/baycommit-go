@@ -250,15 +250,6 @@ func CreateStudy(ownerID uint, req types.StudyCreateRequest) (types.Study, strin
 		return types.Study{}, "", fmt.Errorf("스터디 DB 저장 실패: %v", err)
 	}
 
-	// ⑨ 오너를 user_studies에 참여자로 등록
-	userStudy := types.UserStudy{
-		UserID:  ownerID,
-		StudyID: study.ID,
-	}
-	if err := DB.Create(&userStudy).Error; err != nil {
-		return types.Study{}, "", fmt.Errorf("user_studies 저장 실패: %v", err)
-	}
-
 	return study, tx.Hash().Hex(), nil
 }
 

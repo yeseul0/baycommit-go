@@ -95,6 +95,39 @@ func CreatePendingSession(proxyAddr string, studyDateUnix uint64, txHash string)
 	return DB.Where(where).Attrs(attrs).FirstOrCreate(&types.StudySession{}).Error
 }
 
+// 스터디 참여 (user_studies INSERT + wallet_address 업데이트)
+func JoinStudy(userID uint, proxyAddr string, walletAddress string) error {
+	// study 조회
+	var study types.Study
+	if err := DB.Where("proxy_address = ?", proxyAddr).First(&study).Error; err != nil {
+		return fmt.Errorf("스터디를 찾을 수 없습니다")
+	}
+
+	// 이미 참여 중인지 확인
+	var existing types.UserStudy
+	result := DB.Where("user_id = ? AND study_id = ?", userID, study.ID).First(&existing)
+	if result.Error == nil {
+		return fmt.Errorf("이미 참여 중인 스터디입니다")
+	}
+
+	// user_studies INSERT
+	if err := DB.Create(&types.UserStudy{
+		UserID:  userID,
+		StudyID: study.ID,
+	}).Error; err != nil {
+		return fmt.Errorf("참여 등록 실패: %v", err)
+	}
+
+	// wallet_address 업데이트
+	if err := DB.Model(&types.User{}).
+		Where("id = ?", userID).
+		Update("wallet_address", walletAddress).Error; err != nil {
+		return fmt.Errorf("지갑 주소 저장 실패: %v", err)
+	}
+
+	return nil
+}
+
 // proxyAddress → 스터디 참여자 + repoUrl 목록
 func GetStudyParticipantRepos(proxyAddr string) ([]types.StudyParticipantRepo, error) {
 	var study types.Study
