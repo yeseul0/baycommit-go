@@ -88,3 +88,20 @@ type StudyListResponse struct {
 	Success bool            `json:"success"`
 	Studies []StudyListItem `json:"studies"`
 }
+
+// ===== /study/create 요청/응답 타입 =====
+
+type StudyCreateRequest struct {
+	StudyName      string `json:"studyName"`
+	DepositAmount  string `json:"depositAmount"`  // USDC 단위 (wei), 문자열로 받아 big.Int 변환
+	PenaltyAmount  string `json:"penaltyAmount"`  // USDC 단위 (wei), 문자열로 받아 big.Int 변환
+	StudyStartTime int64  `json:"studyStartTime"` // Unix timestamp
+	StudyEndTime   int64  `json:"studyEndTime"`   // Unix timestamp
+}
+
+type StudyCreateResponse struct {
+	Success      bool   `json:"success"`
+	StudyID      uint   `json:"studyId"`
+	ProxyAddress string `json:"proxyAddress"`
+	TxHash       string `json:"txHash"`
+}

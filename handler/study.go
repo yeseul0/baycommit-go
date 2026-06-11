@@ -11,39 +11,40 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// JWT 쿠키에서 이메일 추출 (공통 로직)
+func extractEmailFromCookie(r *http.Request) (string, error) {
+	cookie, err := r.Cookie("access_token")
+	if err != nil {
+		return "", fmt.Errorf("쿠키 없음")
+	}
+	token, err := jwt.Parse(cookie.Value, func(t *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("JWT_SECRET")), nil
+	})
+	if err != nil || !token.Valid {
+		return "", fmt.Errorf("유효하지 않은 토큰")
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", fmt.Errorf("토큰 파싱 실패")
+	}
+	email, ok := claims["email"].(string)
+	if !ok || email == "" {
+		return "", fmt.Errorf("토큰에 이메일 없음")
+	}
+	return email, nil
+}
+
 /*
 GET /study/list
 쿠키의 access_token JWT로 현재 유저 식별 후 스터디 목록 반환
 */
 func StudyListHandler(w http.ResponseWriter, r *http.Request) {
-	// JWT에서 이메일 추출
-	cookie, err := r.Cookie("access_token")
+	email, err := extractEmailFromCookie(r)
 	if err != nil {
-		http.Error(w, "로그인이 필요합니다", http.StatusUnauthorized)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	token, err := jwt.Parse(cookie.Value, func(t *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("JWT_SECRET")), nil
-	})
-	if err != nil || !token.Valid {
-		http.Error(w, "유효하지 않은 토큰", http.StatusUnauthorized)
-		return
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		http.Error(w, "토큰 파싱 실패", http.StatusUnauthorized)
-		return
-	}
-
-	email, ok := claims["email"].(string)
-	if !ok || email == "" {
-		http.Error(w, "토큰에 이메일 없음", http.StatusUnauthorized)
-		return
-	}
-
-	// 이메일로 유저 조회
 	currentUser, err := service.GetUserByEmail(email)
 	if err != nil {
 		fmt.Printf("유저 조회 실패: %v\n", err)
@@ -51,7 +52,6 @@ func StudyListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 스터디 목록 조회
 	studies, err := service.GetStudyList(currentUser.ID)
 	if err != nil {
 		fmt.Printf("스터디 목록 조회 실패: %v\n", err)
@@ -63,5 +63,58 @@ func StudyListHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(types.StudyListResponse{
 		Success: true,
 		Studies: studies,
+	})
+}
+
+/*
+POST /study/create
+Factory 컨트랙트 호출로 스터디 생성
+Body: { studyName, depositAmount, penaltyAmount, studyStartTime, studyEndTime }
+*/
+func StudyCreateHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 인증
+	email, err := extractEmailFromCookie(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	currentUser, err := service.GetUserByEmail(email)
+	if err != nil {
+		http.Error(w, "유저를 찾을 수 없습니다", http.StatusUnauthorized)
+		return
+	}
+
+	// 요청 파싱
+	var req types.StudyCreateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "요청 파싱 실패", http.StatusBadRequest)
+		return
+	}
+	if req.StudyName == "" || req.DepositAmount == "" || req.PenaltyAmount == "" ||
+		req.StudyStartTime == 0 || req.StudyEndTime == 0 {
+		http.Error(w, "필수 필드 누락", http.StatusBadRequest)
+		return
+	}
+
+	// 스터디 생성 (블록체인 + DB)
+	study, txHash, err := service.CreateStudy(currentUser.ID, req)
+	if err != nil {
+		fmt.Printf("스터디 생성 실패: %v\n", err)
+		http.Error(w, "스터디 생성 실패: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(types.StudyCreateResponse{
+		Success:      true,
+		StudyID:      study.ID,
+		ProxyAddress: study.ProxyAddress,
+		TxHash:       txHash,
 	})
 }
