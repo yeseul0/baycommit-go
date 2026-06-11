@@ -45,6 +45,7 @@ func main() {
 	//api url 등록
 	http.HandleFunc("/webhook", handler.WebhookHandler)
 	http.HandleFunc("/auth/github/callback", handler.GithubCallbackHandler)
+	http.HandleFunc("/github/repositories", handler.GithubRepositoriesHandler)
 	http.HandleFunc("/study/list", handler.StudyListHandler)
 	http.HandleFunc("/study/create", handler.StudyCreateHandler)
 	http.HandleFunc("/study/all/commits/today", handler.TodayCommitsHandler)

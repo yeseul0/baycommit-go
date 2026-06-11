@@ -96,12 +96,25 @@ func getPrimaryEmail(accessToken string) (string, error) {
 }
 
 /*
-③ DB에 유저 저장 (없으면 create, 있으면 그대로)
+③ DB에 유저 저장 (없으면 create, 있으면 access token 업데이트)
 */
-func UpsertUser(githubEmail string, githubLogin string) error {
-	user := types.User{GithubEmail: githubEmail, GithubLogin: githubLogin}
-	return DB.Where(map[string]interface{}{"github_email": githubEmail}).
-		FirstOrCreate(&user).Error
+func UpsertUser(githubEmail string, githubLogin string, accessToken string) error {
+	var user types.User
+	result := DB.Where("github_email = ?", githubEmail).First(&user)
+	if result.Error != nil {
+		// 신규 유저 생성
+		user = types.User{
+			GithubEmail:       githubEmail,
+			GithubLogin:       githubLogin,
+			GithubAccessToken: accessToken,
+		}
+		return DB.Create(&user).Error
+	}
+	// 기존 유저 → access token 갱신 (재로그인 시 토큰 바뀔 수 있음)
+	return DB.Model(&user).Updates(map[string]interface{}{
+		"github_login":        githubLogin,
+		"github_access_token": accessToken,
+	}).Error
 }
 
 /*

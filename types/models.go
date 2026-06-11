@@ -18,10 +18,11 @@ func (Study) TableName() string { //Study 구조체는 studies 테이블임
 
 // users 테이블
 type User struct {
-	ID            uint   `gorm:"primaryKey"`
-	GithubEmail   string `gorm:"column:github_email"`
-	GithubLogin   string `gorm:"column:github_login"`
-	WalletAddress string `gorm:"column:wallet_address"`
+	ID                uint   `gorm:"primaryKey"`
+	GithubEmail       string `gorm:"column:github_email"`
+	GithubLogin       string `gorm:"column:github_login"`
+	WalletAddress     string `gorm:"column:wallet_address"`
+	GithubAccessToken string `gorm:"column:github_access_token"`
 }
 
 func (User) TableName() string {

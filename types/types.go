@@ -89,6 +89,25 @@ type StudyListResponse struct {
 	Studies []StudyListItem `json:"studies"`
 }
 
+// ===== /github/repositories 응답 타입 =====
+
+type GitHubRepository struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	FullName    string `json:"fullName"`
+	HtmlUrl     string `json:"htmlUrl"`
+	Description string `json:"description"`
+	Private     bool   `json:"private"`
+	UpdatedAt   string `json:"updatedAt"`
+	Language    string `json:"language"`
+	Fork        bool   `json:"fork"`
+}
+
+type GitHubRepositoriesResponse struct {
+	Success      bool                `json:"success"`
+	Repositories []GitHubRepository  `json:"repositories"`
+}
+
 // ===== /study/all/commits/today 응답 타입 =====
 
 type TodayCommitSession struct {
