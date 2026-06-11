@@ -95,6 +95,27 @@ func CreatePendingSession(proxyAddr string, studyDateUnix uint64, txHash string)
 	return DB.Where(where).Attrs(attrs).FirstOrCreate(&types.StudySession{}).Error
 }
 
+// user_studies.repo_url 업데이트
+func RegisterRepository(userID uint, proxyAddr string, repoUrl string) error {
+	// proxyAddress → study 조회
+	var study types.Study
+	if err := DB.Where("proxy_address = ?", proxyAddr).First(&study).Error; err != nil {
+		return fmt.Errorf("스터디를 찾을 수 없습니다: %v", err)
+	}
+
+	// 해당 유저의 user_studies 레코드에 repo_url 저장
+	result := DB.Model(&types.UserStudy{}).
+		Where("user_id = ? AND study_id = ?", userID, study.ID).
+		Update("repo_url", repoUrl)
+	if result.Error != nil {
+		return fmt.Errorf("레포 등록 실패: %v", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("해당 스터디 참여 기록이 없습니다")
+	}
+	return nil
+}
+
 // 세션 status 업데이트
 func UpdateStudySessionStatus(proxyAddr string, studyDateUnix uint64, status types.SessionStatus) error {
 	// 1. ProxyAddress로 Study ID 찾기

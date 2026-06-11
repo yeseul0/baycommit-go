@@ -67,6 +67,51 @@ func StudyListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
+POST /study/repository/register
+스터디 참여자가 본인 레포 등록
+*/
+func StudyRepositoryRegisterHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	email, err := extractEmailFromCookie(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	currentUser, err := service.GetUserByEmail(email)
+	if err != nil {
+		http.Error(w, "유저를 찾을 수 없습니다", http.StatusUnauthorized)
+		return
+	}
+
+	var req types.RepositoryRegisterRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "요청 파싱 실패", http.StatusBadRequest)
+		return
+	}
+	if req.ProxyAddress == "" || req.RepoUrl == "" {
+		http.Error(w, "proxyAddress, repoUrl 필수", http.StatusBadRequest)
+		return
+	}
+
+	if err := service.RegisterRepository(currentUser.ID, req.ProxyAddress, req.RepoUrl); err != nil {
+		fmt.Printf("레포 등록 실패: %v\n", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(types.RepositoryRegisterResponse{
+		Success: true,
+		Message: "레포지토리가 등록되었습니다.",
+	})
+}
+
+/*
 GET /study/all/commits/today
 인증 불필요 - 대시보드 실시간 업데이트용
 */
