@@ -47,6 +47,7 @@ func main() {
 	http.HandleFunc("/auth/github/callback", handler.GithubCallbackHandler)
 	http.HandleFunc("/study/list", handler.StudyListHandler)
 	http.HandleFunc("/study/create", handler.StudyCreateHandler)
+	http.HandleFunc("/study/all/commits/today", handler.TodayCommitsHandler)
 	http.HandleFunc("/", handler.HealthHandler)
 	http.Handle("/metrics", promhttp.Handler()) // Prometheus 메트릭 엔드포인트
 

@@ -89,6 +89,27 @@ type StudyListResponse struct {
 	Studies []StudyListItem `json:"studies"`
 }
 
+// ===== /study/all/commits/today 응답 타입 =====
+
+type TodayCommitSession struct {
+	SessionId    uint              `json:"sessionId"`
+	StudyDate    string            `json:"studyDate"`
+	Status       string            `json:"status"`
+	StartedAt    int64             `json:"startedAt"`
+	Participants []ParticipantInfo `json:"participants"`
+}
+
+type TodayCommitStudy struct {
+	StudyName    string               `json:"studyName"`
+	ProxyAddress string               `json:"proxyAddress"`
+	Sessions     []TodayCommitSession `json:"sessions"`
+}
+
+type TodayCommitsResponse struct {
+	Success bool               `json:"success"`
+	Studies []TodayCommitStudy `json:"studies"`
+}
+
 // ===== /study/create 요청/응답 타입 =====
 
 type StudyCreateRequest struct {

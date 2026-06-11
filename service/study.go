@@ -103,6 +103,80 @@ func GetStudyList(currentUserID uint) ([]types.StudyListItem, error) {
 }
 
 /*
+GET /study/all/commits/today
+오늘 세션이 있는 스터디만, 참여자 + 커밋 현황 반환
+*/
+func GetTodayCommits() ([]types.TodayCommitStudy, error) {
+	var studies []types.Study
+	if err := DB.Find(&studies).Error; err != nil {
+		return nil, err
+	}
+
+	today := time.Now().UTC().Format("2006-01-02")
+	result := make([]types.TodayCommitStudy, 0)
+
+	for _, study := range studies {
+		// 오늘 세션 조회
+		var sessions []types.StudySession
+		DB.Where("study_id = ? AND study_date = ?", study.ID, today).Find(&sessions)
+		if len(sessions) == 0 {
+			continue // 오늘 세션 없는 스터디는 제외
+		}
+
+		studyItem := types.TodayCommitStudy{
+			StudyName:    study.Name,
+			ProxyAddress: study.ProxyAddress,
+		}
+
+		for _, session := range sessions {
+			sessionItem := types.TodayCommitSession{
+				SessionId: session.ID,
+				StudyDate: session.StudyDate,
+				Status:    string(session.Status),
+				StartedAt: session.StartedAt,
+			}
+
+			// 참여자 목록
+			var userStudies []types.UserStudy
+			DB.Where("study_id = ?", study.ID).Find(&userStudies)
+
+			for _, us := range userStudies {
+				var user types.User
+				if err := DB.First(&user, us.UserID).Error; err != nil {
+					continue
+				}
+
+				participant := types.ParticipantInfo{
+					GithubEmail:   user.GithubEmail,
+					GithubHandle:  user.GithubLogin,
+					WalletAddress: user.WalletAddress,
+				}
+
+				// 커밋 기록
+				var commitRecord types.CommitRecord
+				err := DB.Where("study_session_id = ? AND user_id = ?", session.ID, us.UserID).
+					First(&commitRecord).Error
+				if err == nil {
+					participant.Commit = &types.CommitInfo{
+						CommitId:      commitRecord.CommitID,
+						CommitMessage: commitRecord.CommitMessage,
+						CommitTime:    commitRecord.CommitTimestamp,
+					}
+				}
+
+				sessionItem.Participants = append(sessionItem.Participants, participant)
+			}
+
+			studyItem.Sessions = append(studyItem.Sessions, sessionItem)
+		}
+
+		result = append(result, studyItem)
+	}
+
+	return result, nil
+}
+
+/*
 POST /study/create
 Factory 컨트랙트로 스터디 생성 → proxyAddress 받아 DB 저장
 */

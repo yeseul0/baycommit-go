@@ -67,6 +67,25 @@ func StudyListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
+GET /study/all/commits/today
+인증 불필요 - 대시보드 실시간 업데이트용
+*/
+func TodayCommitsHandler(w http.ResponseWriter, r *http.Request) {
+	studies, err := service.GetTodayCommits()
+	if err != nil {
+		fmt.Printf("오늘 커밋 조회 실패: %v\n", err)
+		http.Error(w, "오늘 커밋 조회 실패", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(types.TodayCommitsResponse{
+		Success: true,
+		Studies: studies,
+	})
+}
+
+/*
 POST /study/create
 Factory 컨트랙트 호출로 스터디 생성
 Body: { studyName, depositAmount, penaltyAmount, studyStartTime, studyEndTime }
