@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // JWT 쿠키에서 이메일 추출 (공통 로직)
@@ -214,6 +215,10 @@ func StudyCreateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	// [메트릭] HTTP 전체 응답시간 측정 시작
+	timer := prometheus.NewTimer(service.StudyCreateDuration)
+	defer timer.ObserveDuration()
 
 	// 인증
 	email, err := extractEmailFromCookie(r)

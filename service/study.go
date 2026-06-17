@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func GetStudyList(currentUserID uint) ([]types.StudyListItem, error) {
@@ -208,6 +209,8 @@ func CreateStudy(ownerID uint, req types.StudyCreateRequest) (types.Study, strin
 	}
 
 	// ⑤ createProxy 호출
+	// [메트릭] RPC 트랜잭션 전송 시간 측정
+	txTimer := prometheus.NewTimer(BlockchainRPCDuration.WithLabelValues("create_proxy_tx"))
 	tx, err := factory.CreateProxy(
 		auth,
 		req.StudyName,
@@ -217,13 +220,17 @@ func CreateStudy(ownerID uint, req types.StudyCreateRequest) (types.Study, strin
 		big.NewInt(req.StudyStartTime),
 		big.NewInt(req.StudyEndTime),
 	)
+	txTimer.ObserveDuration()
 	if err != nil {
 		return types.Study{}, "", fmt.Errorf("createProxy 트랜잭션 실패: %v", err)
 	}
 	fmt.Printf("createProxy tx 전송됨: %s\n", tx.Hash().Hex())
 
 	// ⑥ 트랜잭션 채굴 대기
+	// [메트릭] 채굴 대기 시간 측정
+	waitTimer := prometheus.NewTimer(BlockchainRPCDuration.WithLabelValues("create_proxy_wait"))
 	receipt, err := bind.WaitMined(context.Background(), client, tx)
+	waitTimer.ObserveDuration()
 	if err != nil {
 		return types.Study{}, "", fmt.Errorf("트랜잭션 마이닝 대기 실패: %v", err)
 	}
@@ -239,6 +246,8 @@ func CreateStudy(ownerID uint, req types.StudyCreateRequest) (types.Study, strin
 	fmt.Printf("생성된 Proxy 주소: %s\n", proxyAddress)
 
 	// ⑧ DB에 스터디 저장
+	// [메트릭] DB INSERT 시간 측정
+	dbTimer := prometheus.NewTimer(DBQueryDuration.WithLabelValues("create_study"))
 	study := types.Study{
 		Name:           req.StudyName,
 		OwnerID:        ownerID,
@@ -246,7 +255,9 @@ func CreateStudy(ownerID uint, req types.StudyCreateRequest) (types.Study, strin
 		StudyStartTime: req.StudyStartTime,
 		StudyEndTime:   req.StudyEndTime,
 	}
-	if err := DB.Create(&study).Error; err != nil {
+	err = DB.Create(&study).Error
+	dbTimer.ObserveDuration()
+	if err != nil {
 		return types.Study{}, "", fmt.Errorf("스터디 DB 저장 실패: %v", err)
 	}
 

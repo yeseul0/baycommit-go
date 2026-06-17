@@ -26,6 +26,10 @@ func ConnectDB() error {
 
 // email -> 유저 조회
 func GetUserByEmail(email string) (types.User, error) {
+	// [메트릭] DB 쿼리 소요시간 측정 - get_user_by_email
+	timer := prometheus.NewTimer(DBQueryDuration.WithLabelValues("get_user_by_email"))
+	defer timer.ObserveDuration()
+
 	var user types.User
 	err := DB.Where("github_email = ?", email).First(&user).Error
 	return user, err

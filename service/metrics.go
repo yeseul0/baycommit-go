@@ -41,6 +41,15 @@ var (
 		[]string{"method"}, // method: get_study_day_info | get_commit_time | start_today_study | track_commit
 	)
 
+	// 스터디 생성 HTTP 전체 응답시간
+	StudyCreateDuration = prometheus.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "baycommit_study_create_duration_seconds",
+			Help:    "POST /study/create 전체 응답시간",
+			Buckets: []float64{0.5, 1, 2, 5, 10, 20, 30, 60},
+		},
+	)
+
 	// Worker Pool 큐 사이즈
 	WorkerQueueSize = prometheus.NewGauge(
 		prometheus.GaugeOpts{
@@ -57,5 +66,6 @@ func InitMetrics() {
 		DBQueryDuration,
 		BlockchainRPCDuration,
 		WorkerQueueSize,
+		StudyCreateDuration,
 	)
 }
